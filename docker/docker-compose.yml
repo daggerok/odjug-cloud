@@ -1,0 +1,12 @@
+config:
+  image: daggerok/config
+  ports:
+    - "8888:8888"
+  links:
+    - discovery
+discovery:
+  image: daggerok/discovery
+  ports:
+    - "8761:8761"
+  links:
+    - config

@@ -1,9 +1,19 @@
+# os x
+**/.DS_Store
+# idea
 **/.idea/
 **/.gradle/
 **/build/
 **/gradle/
 **/out/
-**/.DS_Store
 **/*.iml
 **/*.ipr
 **/*.iws
+# eclipse
+**/.classpath
+**/.project
+**/.settings/
+**/bin/
+**/.h2.*.db*
+zipkin/
+zipkin-docker/

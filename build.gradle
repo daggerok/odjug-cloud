@@ -1,7 +1,12 @@
 buildscript {
   dependencies {
-    repositories { jcenter() }
-    classpath"org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion"
+    repositories {
+      jcenter()
+      maven { url 'http://repo.spring.io/plugins-release' }
+    }
+
+    classpath "org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion",
+        "org.springframework.build.gradle:propdeps-plugin:$propdepsPluginVersion"
   }
 }
 
@@ -9,16 +14,21 @@ allprojects {
   version = appVersion
   group = appGroup
 
-  apply plugin: 'idea'
   apply plugin: 'java'
+  apply plugin: 'idea'
+  apply plugin: 'eclipse'
+  apply plugin: 'propdeps'
+  apply plugin: 'propdeps-idea'
+  apply plugin: 'propdeps-maven'
+  apply plugin: 'propdeps-eclipse'
 
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = sourceCompatibility
+  targetCompatibility = sourceCompatibility = JavaVersion.VERSION_1_8
 
   repositories {
     jcenter()
     maven { url 'https://repo.spring.io/snapshot' }
     maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://repo.spring.io/libs-milestone' }
   }
 
   task wrapper(type: Wrapper) { gradleVersion = localGradleVersion }
@@ -31,32 +41,185 @@ subprojects {
 
   apply plugin: 'io.spring.dependency-management'
 
-  dependencies {
-    compile "org.projectlombok:lombok:$lombokVersion",
-            'org.springframework.boot:spring-boot-devtools',
-            'org.springframework.boot:spring-boot-starter-actuator'
-
-    testCompile 'org.springframework.boot:spring-boot-starter-test'
-  }
-
   dependencyManagement {
     imports {
       mavenBom "org.springframework.cloud:spring-cloud-dependencies:$springCloudVersion"
+      mavenBom "org.springframework.cloud:spring-cloud-sleuth:$springCloudSleuthVersion"
     }
   }
 
   apply plugin: 'spring-boot'
+
+  springBoot { executable = true }
+
+  dependencies {
+    compile "org.projectlombok:lombok:$lombokVersion",
+        'org.springframework.boot:spring-boot-starter-actuator',
+        'org.springframework.cloud:spring-cloud-starter-config',
+        'org.springframework.cloud:spring-cloud-starter-eureka',
+        'org.springframework.cloud:spring-cloud-starter-hystrix',
+        /*
+        'org.springframework.cloud:spring-cloud-starter-bus-amqp',
+        'org.springframework.cloud:spring-cloud-starter-bus-kafka',
+         */
+        'org.springframework.retry:spring-retry'
+
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+  }
 }
 
 project(':config') {
   dependencies {
-    compile 'org.springframework.cloud:spring-cloud-config-server'
+    compile 'org.springframework.cloud:spring-cloud-config-server'/*,
+            'org.springframework.cloud:spring-cloud-config-monitor'*/
   }
 }
 
 project(':discovery') {
   dependencies {
-    compile 'org.springframework.cloud:spring-cloud-starter-eureka-server',
-            'org.springframework.cloud:spring-cloud-starter-config'
+    compile 'org.springframework.cloud:spring-cloud-starter-eureka-server'
   }
 }
+
+project(':status') {
+  dependencies {
+    compile "com.netflix.spring:spring-cloud-netflix-contrib:$netflixContribVersion"
+  }
+}
+
+project(':context') {
+  dependencies {
+    optional "org.springframework.boot:spring-boot-configuration-processor"
+  }
+
+  compileJava.dependsOn(processResources)
+}
+
+project(':hystrix') {
+  dependencies {
+    compile 'org.springframework.cloud:spring-cloud-starter-hystrix'
+  }
+}
+
+project(':hystrix-dashboard') {
+  dependencies {
+    compile 'org.springframework.cloud:spring-cloud-starter-hystrix-dashboard',
+        'org.springframework.cloud:spring-cloud-starter-hystrix'
+  }
+}
+
+project(':spectator') {
+  dependencies {
+    compile 'org.springframework.boot:spring-boot-starter-aop',
+        'org.springframework.cloud:spring-cloud-starter-hystrix',
+        "com.netflix.spring:spring-cloud-netflix-contrib:$netflixContribVersion",
+        "com.netflix.spectator:spectator-api:$netflixSpectatorVersion",
+        "com.netflix.spectator:spectator-reg-servo:$netflixSpectatorVersion",
+        "com.netflix.spectator:spectator-ext-sandbox:$netflixSpectatorVersion"
+
+  }
+}
+
+project(':ribbon') {
+  dependencies {
+    compile 'org.springframework.cloud:spring-cloud-starter-ribbon'
+  }
+}
+
+project(':feign-resource') {
+  dependencies {
+    compile 'org.springframework.cloud:spring-cloud-starter-feign'
+  }
+}
+
+project(':feign-client') {
+  dependencies {
+    compile 'org.springframework.cloud:spring-cloud-starter-feign'
+  }
+}
+
+project(':zuul') {
+  dependencies {
+    compile 'org.springframework.cloud:spring-cloud-starter-zuul'
+  }
+}
+
+project(':kafka-source-edge-client-gateway') {
+  dependencies {
+    compile project(':stream-dto'),
+        'org.springframework.cloud:spring-cloud-starter-bus-kafka',
+        'org.springframework.cloud:spring-cloud-starter-stream-kafka',
+        'org.springframework.cloud:spring-cloud-starter-sleuth',
+        'org.springframework.cloud:spring-cloud-starter-zipkin',
+        'org.springframework.cloud:spring-cloud-starter-feign',
+        'org.springframework.cloud:spring-cloud-starter-zuul',
+        'org.springframework.cloud:spring-cloud-starter-hystrix',
+        'org.springframework.boot:spring-boot-starter-hateoas'
+
+    testCompile 'org.springframework.cloud:spring-cloud-stream-binder-test',
+        'org.springframework.cloud:spring-cloud-stream-test-support-internal'
+  }
+}
+
+project(':kafka-sink-domain-data') {
+  dependencies {
+    compile project(':stream-dto'),
+        'org.springframework.cloud:spring-cloud-starter-bus-kafka',
+        'org.springframework.cloud:spring-cloud-starter-stream-kafka',
+        'org.springframework.cloud:spring-cloud-starter-sleuth',
+        'org.springframework.cloud:spring-cloud-starter-zipkin',
+        'org.springframework.cloud:spring-cloud-starter-zuul',
+        'org.springframework.boot:spring-boot-starter-data-rest',
+        'org.springframework.boot:spring-boot-starter-data-jpa',
+        'org.springframework.boot:spring-boot-starter-hateoas'
+
+    runtime 'com.h2database:h2'
+
+    testCompile 'org.springframework.cloud:spring-cloud-stream-binder-test',
+        'org.springframework.cloud:spring-cloud-stream-test-support-internal'
+  }
+}
+
+project(':rabbit-source-edge-client-gateway') {
+  dependencies {
+    compile project(':stream-dto'),
+        'org.springframework.cloud:spring-cloud-starter-bus-amqp',
+        'org.springframework.cloud:spring-cloud-stream',
+        'org.springframework.cloud:spring-cloud-starter-stream-rabbit',
+        'org.springframework.cloud:spring-cloud-starter-sleuth',
+        'org.springframework.cloud:spring-cloud-starter-zipkin',
+        'org.springframework.cloud:spring-cloud-starter-feign',
+        'org.springframework.cloud:spring-cloud-starter-zuul',
+        'org.springframework.cloud:spring-cloud-starter-hystrix',
+        'org.springframework.boot:spring-boot-starter-hateoas'
+
+    testCompile 'org.springframework.cloud:spring-cloud-stream-binder-test',
+        'org.springframework.cloud:spring-cloud-stream-test-support-internal'
+  }
+}
+
+project(':rabbit-sink-domain-data') {
+  dependencies {
+    compile project(':stream-dto'),
+        'org.springframework.cloud:spring-cloud-starter-bus-amqp',
+        'org.springframework.cloud:spring-cloud-stream',
+        'org.springframework.cloud:spring-cloud-starter-stream-rabbit',
+        'org.springframework.cloud:spring-cloud-starter-sleuth',
+        'org.springframework.cloud:spring-cloud-starter-zipkin',
+        'org.springframework.cloud:spring-cloud-starter-zuul',
+        'org.springframework.boot:spring-boot-starter-data-rest',
+        'org.springframework.boot:spring-boot-starter-data-jpa',
+        'org.springframework.boot:spring-boot-starter-hateoas'
+
+    runtime 'com.h2database:h2'
+
+    testCompile 'org.springframework.cloud:spring-cloud-stream-binder-test',
+        'org.springframework.cloud:spring-cloud-stream-test-support-internal'
+  }
+}
+
+/*
+project(':echo') {}
+project(':discovery-client') {}
+project(':rest-template') {}
+*/

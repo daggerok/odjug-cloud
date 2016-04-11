@@ -1,0 +1,10 @@
+spring:
+  application.name: config
+  cloud.config.server:
+    git:
+      # uri: git@github.com:daggerok/odjug-cloud-config
+      uri: https://github.com/daggerok/odjug-cloud-config
+      # uri: file:${user.home}/code/test/java/spring/odjug-cloud-config
+      baseDir: build/configurations
+    # comment it out if fail at first time:
+    bootstrap: true

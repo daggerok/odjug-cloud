@@ -1,0 +1,8 @@
+#server:
+#  port: ${PORT:${SERVER_PORT:5432}}
+spring:
+  cloud:
+    config:
+      url: ${CONFIG_SERVICE_URL:${CONFIG_SERVICE_HOST:http://localhost}:${CONFIG_SERVICE_PORT:8888}}
+  application:
+    name: zuul

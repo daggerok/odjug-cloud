@@ -1,0 +1,6 @@
+spring:
+  cloud:
+    config:
+      uri: ${CONFIG_SERVICE_URL:http://${CONFIG_SERVICE_HOST:localhost}:${CONFIG_SERVICE_PORT:8888}}
+  application:
+    name: kafka-source-edge-client-gateway
